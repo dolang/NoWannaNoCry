@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals
 __author__ = 'Dominik Lang'
 __copyright___ = 'Copyright (c) 2017 Dominik Lang'
 __license___ = 'GPL v3'
-__version__ = '0.1.dev3'
+__version__ = '0.1.dev4'
 
 import sys
 from collections import namedtuple
@@ -458,9 +458,16 @@ def cli_args():
     :rtype: argparse.Namespace
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--check', action='store_true')
-    parser.add_argument('-m', '--mitigate', action='store_true')
+    parser.add_argument('-c', '--check', action='store_true',
+                        help="check if the system is vulnerable to WCry")
+    parser.add_argument('-m', '--mitigate', action='store_true',
+                        help="mitigate the system's vulnerability by disabling the"
+                             " SMBv1 protocol, if necessary; implies --check")
 #     parser.add_argument('-f', '--fix', action='store_true')  # not yet implemented
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+    # else:
     return parser.parse_args()
 
 
@@ -468,6 +475,7 @@ def main():
     """Main entry point for the NoWannaNoCry script."""
     try:
         args = cli_args()
+        
         if args.check and not args.mitigate:
             check()
         elif args.mitigate:
