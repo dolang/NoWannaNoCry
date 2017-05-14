@@ -2,10 +2,13 @@
 NoWannaNoCry - nwnc.py
 ======================
 
-A script to help mitigate against the WCry malware which is spreading
-over the Internet right now.  Some operations need elevated permissions,
-so don't just trust me on this, but read this document carefully and have
-a look at the code itself before running it.
+A script to help mitigate against the WCry malware which was spreading
+over the internet. The spreading of the initial version of this malware
+seems to have been stopped by a built-in kill switch.
+
+Some script operations need elevated permissions, so don't just trust me
+on this, but read this document carefully and have a look at the code
+itself before running it.
 
 
 Disclaimer / WIP
