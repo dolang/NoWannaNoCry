@@ -394,8 +394,10 @@ def run_as_admin():
     if not am_admin():
         try:
             print('Restarting and requesting admin privileges.')
-            ctypes.windll.shell32.ShellExecuteW(
-                None, 'Runas', sys.executable, ' '.join(sys.argv), None, 1)
+            exe, args = sys.executable, ' '.join(sys.argv)
+            if sys.version_info[0] == 2:
+                exe = _decode(exe)
+            ctypes.windll.shell32.ShellExecuteW(None, 'Runas', exe, args, None, 1)
             sys.exit()
         except Exception as e:
             print(e)
