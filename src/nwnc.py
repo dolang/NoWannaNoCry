@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals
 __author__ = 'Dominik Lang'
 __copyright___ = 'Copyright (c) 2017 Dominik Lang'
 __license___ = 'GPL v3'
-__version__ = '0.1.dev1'
+__version__ = '0.1.dev2'
 
 import sys
 from collections import namedtuple
@@ -68,6 +68,11 @@ REQUIRED_KB = OsVersions(
     ['KB4012606', 'KB4013198', 'KB4013429', 'KB4015438',  # win10_s2016
      'KB4016635', 'KB4015217', 'KB4019472']
 )
+
+
+# in case we're running Python 2:
+if 'raw_input' in dir(__builtins__):
+    input = raw_input  # @UndefinedVariable @ReservedAssignment
 
 
 def os_id_index():
@@ -189,12 +194,29 @@ def check_installed_kbs():
     return fix_installed
 
 
-def check_smb_v1():
-    """Check if the SMBv1 protocol is enabled.
+def can_check_smb_v1():
+    """Check whether this machine has the Cmdlet to query SMBv1 status.
     
-    The security hole exploited by WCry is in the SMBv1 protocol.  If 
-    it's enabled and no update with a fix is installed, then the system
-    is vulnerable.
+    The PowerShell Cmdlet ``Get-SmbServerConfiguration`` required to
+    check the SMBv1 protocol status is not available by default on all
+    machines.  Find out if it's present on this one.
+    
+    :return: ``True`` if the Cmdlet is available; otherwise, ``False``.
+    :rtype: bool
+    """
+    cmd = ['PowerShell', '-Command',
+           'Write-Host',
+           '$([bool](Get-Command Get-SmbServerConfiguration' 
+           ' -ErrorAction SilentlyContinue))']
+    proc_info = run(cmd)
+    return proc_info.stdout.strip().lower() == 'true'
+
+
+def check_smb_v1_powershell():
+    """Check if the SMBv1 protocol is enabled through a Cmdlet.
+    
+    Requires that the PowerShell Cmdlet ``SmbServerConfiguration``
+    exists, i.e. `can_check_smb_v1()` returns ``True``.
     
     See:
     https://technet.microsoft.com/en-us/library/security/ms17-010.aspx
@@ -206,7 +228,6 @@ def check_smb_v1():
     cmd = ['PowerShell', '-Command',
            'Get-SmbServerConfiguration | Select EnableSMB1Protocol']
     
-    print('Checking if the SMB v1 protocol is enabled...')
     proc_info = run(cmd)
     if proc_info.stderr:
         sys.stderr.write('Error:\r\n' + proc_info.stderr)
@@ -215,6 +236,44 @@ def check_smb_v1():
     print(proc_info.stdout)
     return False
     return proc_info.stdout.split()[2].strip().lower() == 'false'
+
+
+def check_smb_v1_registry():
+    """Query the registry to check if the SMBv1 protocol is enabled.
+    
+    :return:
+        ``True`` if the SMB v1 protocol is active; otherwise, ``False``.
+    :rtype: bool
+    """
+    cmd = ['PowerShell', '-Command',
+           'Get-ItemProperty'
+           ' -Path "HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters"'
+           ' | Select SMB1']
+    
+    proc_info = run(cmd)
+    # third line contains the value, which should be '0' or '1', or ''
+    # if the key doesn't exist.  In that case it's assumed that SMBv1
+    # is active by default
+    value = proc_info.stdout.split()[2].strip()  
+    return True if value == '' else bool(int(value))
+
+
+def check_smb_v1():
+    """Check if the SMBv1 protocol is enabled.
+    
+    The security hole exploited by WCry is in the SMBv1 protocol.  If 
+    it's enabled and no update with a fix is installed, then the system
+    is vulnerable.
+    
+    :return:
+        ``True`` if the SMB v1 protocol is active; otherwise, ``False``.
+    :rtype: bool
+    """
+    print('Checking if the SMB v1 protocol is enabled...')
+    if can_check_smb_v1():
+        return check_smb_v1_powershell()
+    # else:
+    return check_smb_v1_registry()
 
 
 def set_smb_v1(enable):  # TODO: this commandlet is only available on Windows 8 and above
@@ -301,6 +360,8 @@ def mitigate():
     See:
     https://technet.microsoft.com/en-us/library/security/ms17-010.aspx#ID0E3SAG
     
+    `mitigate()` implies running a `check()`.
+    
     The system is checked for installed KBs to determine if disabling
     the SMBv1 protocol is necessary.
     
@@ -315,7 +376,10 @@ def mitigate():
 
 
 def fix():
-    """TODO: doc"""
+    """TODO: doc
+    
+    `fix()` implies running a `check()`.
+    """
     raise NotImplementedError()  # TODO: download appropriate update & run setup
 
 
@@ -343,11 +407,7 @@ def main():
         elif args.mitigate:
             mitigate()
         # TODO: implement & call fix()
-        try:
-            # in case we're running Python 2:
-            input = raw_input  # @UndefinedVariable @ReservedAssignment
-        except:
-            pass
+
         input('\r\nDone. Press any key to exit.')
     except Exception as e:
         sys.exit(e)

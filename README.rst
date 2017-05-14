@@ -39,8 +39,8 @@ About WCry
 ----------
 
 "WCry", "WannaCry", "WannaCrypt", "WanaCrypt0r", "Wanna" and some others
-are all names for a malware/ransomware which has recently surfaced and is
-spreading rapidly.  In a nutshell, it'll encrypt various files on your
+are all names for a malware/ransomware which has recently surfaced and
+can spread rapidly.  In a nutshell, it'll encrypt various files on your
 Windows systems and wants you to pay ~300$ in Bitcoins for the decryption
 key.
 
