@@ -143,9 +143,8 @@ def run(popen_args):
     :rtype: ProcessInfo
     """
     proc = subprocess.Popen(popen_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    proc.wait()
-    proc_info = ProcessInfo(
-        proc.returncode, _decode(proc.stdout.read()), _decode(proc.stderr.read()))
+    stdout, stderr = proc.communicate()
+    proc_info = ProcessInfo(proc.returncode, _decode(stdout), _decode(stderr))
     return proc_info
 
 
