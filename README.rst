@@ -22,11 +22,8 @@ any kind, as pointed out in the LICENSE.**
 Known Issues
 ~~~~~~~~~~~~
 
-  * The PowerShell-Cmdlet used in the ``mitigate`` command is only
-    available on Windows 8 and above.
-
   * Doesn't properly request admin privileges when run under Python 2.
-    I.e. you need to open an admin console beforehand, then run the
+    I.e. you need to open an admin console beforehand, then run the 
     script from there.
 
   * The ``fix`` command hasn't been implemented yet.

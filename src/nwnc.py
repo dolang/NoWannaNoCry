@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals
 __author__ = 'Dominik Lang'
 __copyright___ = 'Copyright (c) 2017 Dominik Lang'
 __license___ = 'GPL v3'
-__version__ = '0.1.dev2'
+__version__ = '0.1.dev3'
 
 import sys
 from collections import namedtuple
@@ -194,6 +194,19 @@ def check_installed_kbs():
     return fix_installed
 
 
+def _is_powershell_cmdlet_available(cmdlet):
+    """Check whether a PowerShell Cmdlet exists on this machine.
+    
+    :return: ``True`` if the Cmdlet is available; otherwise, ``False``.
+    :rtype: bool
+    """
+    cmd = ['PowerShell', '-Command',
+           'Write-Host',
+           '$([bool](Get-Command ' + cmdlet + ' -ErrorAction SilentlyContinue))']
+    proc_info = run(cmd)
+    return proc_info.stdout.strip().lower() == 'true'
+    
+
 def can_check_smb_v1():
     """Check whether this machine has the Cmdlet to query SMBv1 status.
     
@@ -204,16 +217,11 @@ def can_check_smb_v1():
     :return: ``True`` if the Cmdlet is available; otherwise, ``False``.
     :rtype: bool
     """
-    cmd = ['PowerShell', '-Command',
-           'Write-Host',
-           '$([bool](Get-Command Get-SmbServerConfiguration' 
-           ' -ErrorAction SilentlyContinue))']
-    proc_info = run(cmd)
-    return proc_info.stdout.strip().lower() == 'true'
+    return _is_powershell_cmdlet_available('Get-SmbServerConfiguration')
 
 
 def check_smb_v1_powershell():
-    """Check if the SMBv1 protocol is enabled through a Cmdlet.
+    """Check through a Cmdlet if the SMBv1 protocol is disabled.
     
     Requires that the PowerShell Cmdlet ``SmbServerConfiguration``
     exists, i.e. `can_check_smb_v1()` returns ``True``.
@@ -221,8 +229,7 @@ def check_smb_v1_powershell():
     See:
     https://technet.microsoft.com/en-us/library/security/ms17-010.aspx
     
-    :return:
-        ``True`` if the SMB v1 protocol is active; otherwise, ``False``.
+    :return: ``True`` if SMBv1 is disabled; otherwise, ``False``.
     :rtype: bool
     """
     cmd = ['PowerShell', '-Command',
@@ -234,15 +241,13 @@ def check_smb_v1_powershell():
         sys.exit(1)
     # else:
     print(proc_info.stdout)
-    return False
     return proc_info.stdout.split()[2].strip().lower() == 'false'
 
 
 def check_smb_v1_registry():
-    """Query the registry to check if the SMBv1 protocol is enabled.
+    """Query the registry to check if the SMBv1 protocol is disabled.
     
-    :return:
-        ``True`` if the SMB v1 protocol is active; otherwise, ``False``.
+    :return: ``True`` if SMBv1 is disabled; otherwise, ``False``.
     :rtype: bool
     """
     cmd = ['PowerShell', '-Command',
@@ -255,29 +260,41 @@ def check_smb_v1_registry():
     # if the key doesn't exist.  In that case it's assumed that SMBv1
     # is active by default
     value = proc_info.stdout.split()[2].strip()  
-    return True if value == '' else bool(int(value))
+    return False if value == '' else not bool(int(value))
 
 
 def check_smb_v1():
-    """Check if the SMBv1 protocol is enabled.
+    """Check if the SMBv1 protocol is disabled.
     
     The security hole exploited by WCry is in the SMBv1 protocol.  If 
     it's enabled and no update with a fix is installed, then the system
     is vulnerable.
     
-    :return:
-        ``True`` if the SMB v1 protocol is active; otherwise, ``False``.
+    :return: ``True`` if SMBv1 is disabled; otherwise, ``False``.
     :rtype: bool
     """
-    print('Checking if the SMB v1 protocol is enabled...')
+    print('Checking if the SMB v1 protocol is disabled...')
     if can_check_smb_v1():
         return check_smb_v1_powershell()
     # else:
     return check_smb_v1_registry()
 
 
-def set_smb_v1(enable):  # TODO: this commandlet is only available on Windows 8 and above
-    """Enable or disable the SMBv1 protocol.
+def can_set_smb_v1():
+    """Check whether this machine has the Cmdlet to change SMBv1.
+    
+    The PowerShell Cmdlet ``Set-SmbServerConfiguration`` required to
+    enable/disable the SMBv1 protocol is not available by default on all
+    machines.  Find out if it's present on this one.
+    
+    :return: ``True`` if the Cmdlet is available; otherwise, ``False``.
+    :rtype: bool
+    """
+    return _is_powershell_cmdlet_available('Set-SmbServerConfiguration')
+
+
+def set_smb_v1_powershell(enable):
+    """Enable or disable the SMBv1 protocol through a Cmdlet.
     
     This requires admin privileges.  If run without, exits the script
     with return code 1.
@@ -296,8 +313,49 @@ def set_smb_v1(enable):  # TODO: this commandlet is only available on Windows 8 
         sys.exit(1)
     # else:
     print(proc_info.stdout)
-    print('The SMBv1 protocol has been disabled. The system is no longer vulnerable.')
+
+
+def set_smb_v1_registry(enable):
+    """Enable or disable the SMBv1 protocol through the registry.
     
+    This requires admin privileges.  If run without, exits the script
+    with return code 1.
+    
+    :param bool enable: Whether to enable or disable the protocol.
+    """
+    enable = '1' if enable else '0'
+    cmd = ['PowerShell', '-Command',
+           'Set-ItemProperty',
+           '-Path', 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters',
+           'SMB1', '-Type', 'DWORD', '-Value', enable, '-Force']
+    proc_info = run(cmd)
+    if proc_info.stderr:
+        print()
+        sys.stderr.write('Error:' + proc_info.stderr)
+        sys.exit(1)
+    # else:
+    print(proc_info.stdout)
+
+
+def set_smb_v1(enable):
+    """Enable or disable the SMBv1 protocol.
+    
+    This requires admin privileges.  If run without, exits the script
+    with return code 1.
+
+    :param bool enable: Whether to enable or disable the protocol.
+    """
+    if can_set_smb_v1():
+        set_smb_v1_powershell(enable)
+    else:
+        set_smb_v1_registry(enable)
+    if not enable:
+        print('The SMBv1 protocol has been disabled.'
+              ' The system is no longer vulnerable.')
+    else:
+        print('The SMBv1 protocol has been enabled.'
+              'This can make the system vulnerable, if the security hole is unpatched.')
+
 
 def am_admin():
     """Check if the logged-in user's account has admin privileges.
@@ -399,8 +457,6 @@ def cli_args():
 def main():
     """Main entry point for the NoWannaNoCry script."""
     try:
-        print(sys.executable)
-        print(sys.argv)
         args = cli_args()
         if args.check and not args.mitigate:
             check()
