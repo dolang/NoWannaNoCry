@@ -1,11 +1,20 @@
-===================
-NoWannaNoCry - nwnc
-===================
+======================
+NoWannaNoCry - nwnc.py
+======================
 
-A script to help mitigate against the WCry malware which is spreading
-over the Internet right now.  Some operations need elevated permissions,
-so don't just trust me on this, but read this document carefully and have
-a look at the code itself before running it.
+A script to help mitigate against the WCry malware which was spreading
+over the internet. The spreading of the initial version of this malware
+seems to have been stopped by a built-in kill switch.
+
+Some script operations need elevated permissions, so don't just trust me
+on this, but read this document carefully and have a look at the code
+itself before running it.
+
+**Important:** The script can only diagnose and close the security hole
+ which is being exploited by WCry to infect new machines.  It is
+ impossible to recover already encrypted files without the encryption key
+ (which I obviously don't have).  Therefore, this script won't help you
+ if your machine is already infected.
 
 
 Disclaimer / WIP
@@ -19,14 +28,11 @@ any kind, as pointed out in the LICENSE.**
 Known Issues
 ~~~~~~~~~~~~
 
-  * The PowerShell-Cmdlet used in the mitigate command is only available
-    on Windows 8 and above.
-
   * Doesn't properly request admin privileges when run under Python 2.
-    I.e. you need to open an admin console beforehand, then run the
+    I.e. you need to open an admin console beforehand, then run the 
     script from there.
 
-  * The fix command hasn't been implemented yet.
+  * The ``fix`` command hasn't been implemented yet.
 
   * Has not been tested on many different systems yet, so it's probably
     not robust enough to run on yours.
@@ -36,10 +42,10 @@ About WCry
 ----------
 
 "WCry", "WannaCry", "WannaCrypt", "WanaCrypt0r", "Wanna" and some others
-are all names for a malware/ransomware which has recently surfaced and is
-spreading rapidly.  In a nutshell, it'll encrypt various files on your
-Windows systems and wants you to pay ~300$ in Bitcoins for the decryption
-key.
+are all names for a malware/ransomware which has recently surfaced and
+can spread rapidly.  In a nutshell, it can infect Windows systems through
+a security hole. Then it will encrypt various types of files on those
+systems and wants you to pay ~300$ in Bitcoins for the decryption key.
 
 It does so by exploiting a critical Windows security hole using code
 derived from the recently leaked trove of NSA hacking tools (`EternalBlue
@@ -47,7 +53,8 @@ derived from the recently leaked trove of NSA hacking tools (`EternalBlue
 not entirely clear how it's spreading.  But the bad news is that the
 security hole it exploits at least inside a local network doesn't require
 any user interaction.  The good news is that Microsoft has patched that
-hole in a recent security update.
+hole in a recent security update.  So if your machines are up-to-date,
+they're probably not vulnerable.
 
 For further information read the following articles:
 
@@ -70,18 +77,36 @@ __ https://www.reddit.com/r/pcmasterrace/comments/6atu62/
 About this script
 -----------------
 
-It's actually nothing special, just runs a bunch of scripts which I
-gathered from the previously mentioned links and put into a command line
-tool written in Python [1]_.  All credit goes to the respective parties.
+It's actually nothing special, just runs a bunch of commands which I
+gathered from the previously mentioned links. Then I put them into a
+command line script written in Python [1]_.  All credit goes to the
+respective parties.
 
-The tool has the following parameters:
+The script has the following parameters:
 
-  * ``-c`` ``--check``: Check if the system is vulnerable.
+  * ``-c`` or ``--check``: Check if the system is vulnerable.
     
-  * ``-m`` ``--mitigate``: Disable the SMB v1 protocol if no fix is already
+  * ``-m`` or ``--mitigate``: Disable the SMB v1 protocol if no fix is already
     installed.
 
-  * Soon to come, not yet done: ``-f`` ``--fix``: ...
+  * Soon to come, not yet done: ``-f`` or ``--fix``: ...
+
+
+Usage
+-----
+
+Download the file ``nwnc.py`` from the ``src`` folder, open a command prompt
+and then...
+
+If you only want to see if your system is vulnerable::
+
+    \> cd path\to\directory\containing\the\script
+    \> python nwnc.py -c
+
+If you want to disable the SMB v1 protocol [2]_ if your system is vulnerable::
+
+    \> cd path\to\directory\containing\the\script
+    \> python nwnc.py -m
 
 
 Python
@@ -92,7 +117,7 @@ all major platforms and needs to be installed on your system to run this
 script.
 
 If you don't want to do that, I recommend to instead having a look at the
-reddit thread to which I linked in `About Wcry`_.
+reddit thread to which I linked in `About WCry`_.
 
 
 Additional Links
@@ -113,4 +138,9 @@ Additional Links
 
 .. [1] In Python because I've yet to take the time to properly learn
        PowerShell myself.  If someone wants to provide a script entirely
-       written in PowerShell, feel free to send me a pull request.
+       written in PowerShell, feel free to send me a pull request or
+       link to your project/site.
+
+.. [2] If you're curious as to why disabling the SMB v1 protocol
+       mitigates the problem, check the Microsoft Security Bulletin in
+       `Additional Links`_.
