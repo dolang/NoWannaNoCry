@@ -42,11 +42,19 @@ import re
 import subprocess
 
 
-OsVersions = namedtuple('OsVersions',
-                        ['xp', 'vista_s2008', 'win7_2008r2', 'win8',
-                        's2012', 'win81_s2012r2', 'win10_s2016'])
+# Affected Windows versions.  Grouped by the KB updates to fix them.
+OsVersions = namedtuple('OsVersions',    
+                        ['xp',             # Windows XP
+                         'vista_s2008',    # Windows Vista & Windows Server 2008
+                         'win7_2008r2',    # Windows 7 & Windows Server 2008 R2
+                         'win8',           # Windows 8
+                         's2012',          # Windows Server 2012
+                         'win81_s2012r2',  # Windows 8.1 & Windows Server 2012 R2
+                         'win10_s2016'])   # Windows 10 & Windows Server 2016
 
 
+# (Major, Minor, predicate) version numbers of Windows systems and a
+# check to distinguish between Windows 8 and Server 2012
 OS_ID = OsVersions(
     (5, 1),  # xp
     (6, 0),  # vista_s2008
@@ -57,7 +65,8 @@ OS_ID = OsVersions(
     (10, 0)  # win10_s2016 
 )
 
-
+# Systems with multiple applicable KBs only need one of them to not be
+# vulnerable.
 REQUIRED_KB = OsVersions(
     ['KB4012598'],  # xp
     ['KB4012598'],  # vista_s2008

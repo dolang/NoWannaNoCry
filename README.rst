@@ -10,6 +10,12 @@ Some script operations need elevated permissions, so don't just trust me
 on this, but read this document carefully and have a look at the code
 itself before running it.
 
+**Important:** The script can only diagnose and close the security hole
+ which is being exploited by WCry to infect new machines.  It is
+ impossible to recover already encrypted files without the encryption key
+ (which I obviously don't have).  Therefore, this script won't help you
+ if your machine is already infected.
+
 
 Disclaimer / WIP
 ----------------
@@ -37,9 +43,9 @@ About WCry
 
 "WCry", "WannaCry", "WannaCrypt", "WanaCrypt0r", "Wanna" and some others
 are all names for a malware/ransomware which has recently surfaced and
-can spread rapidly.  In a nutshell, it'll encrypt various files on your
-Windows systems and wants you to pay ~300$ in Bitcoins for the decryption
-key.
+can spread rapidly.  In a nutshell, it can infect Windows systems through
+a security hole. Then it will encrypt various types of files on those
+systems and wants you to pay ~300$ in Bitcoins for the decryption key.
 
 It does so by exploiting a critical Windows security hole using code
 derived from the recently leaked trove of NSA hacking tools (`EternalBlue
@@ -47,7 +53,8 @@ derived from the recently leaked trove of NSA hacking tools (`EternalBlue
 not entirely clear how it's spreading.  But the bad news is that the
 security hole it exploits at least inside a local network doesn't require
 any user interaction.  The good news is that Microsoft has patched that
-hole in a recent security update.
+hole in a recent security update.  So if your machines are up-to-date,
+they're probably not vulnerable.
 
 For further information read the following articles:
 
