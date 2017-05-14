@@ -2,27 +2,27 @@
 NoWannaNoCry - nwnc.py
 ======================
 
-A script to help mitigate against the WCry malware which was spreading
-over the internet. The spreading of the initial version of this malware
-seems to have been stopped by a built-in kill switch.
+A script to help mitigate against the WCry malware which was infecting
+machines over the internet.  Note: The spreading of the initial version
+of this malware seems to have been stopped by a built-in kill switch.
 
 Some script operations need elevated permissions, so don't just trust me
 on this, but read this document carefully and have a look at the code
 itself before running it.
 
 **Important:** The script can only diagnose and close the security hole
- which is being exploited by WCry to infect new machines.  It is
- impossible to recover already encrypted files without the encryption key
- (which I obviously don't have).  Therefore, this script won't help you
- if your machine is already infected.
+which is being exploited by WCry to infect new machines.  To my
+knowledge, so far it's not possible to recover already encrypted files
+without the encryption key (which of course I don't have).  Therefore,
+this script won't help you if your machine is already infected.
 
 
 Disclaimer / WIP
 ----------------
 
-**This is a work in progress and as such is probably not suitable to be
-run on mission critical systems.  Also there's no guarantee/warranty of
-any kind, as pointed out in the LICENSE.**
+**This is a work in progress and as such is probably not (yet) suitable
+to be run on mission critical systems.  Also there's no
+guarantee/warranty of any kind, as pointed out in the LICENSE.**
 
 
 Known Issues
@@ -34,8 +34,8 @@ Known Issues
 
   * The ``fix`` command hasn't been implemented yet.
 
-  * Has not been tested on many different systems yet, so it's probably
-    not robust enough to run on yours.
+  * Has not been tested on many different systems yet, so it may not be
+    robust enough to run on yours.
 
 
 About WCry
@@ -43,18 +43,24 @@ About WCry
 
 "WCry", "WannaCry", "WannaCrypt", "WanaCrypt0r", "Wanna" and some others
 are all names for a malware/ransomware which has recently surfaced and
-can spread rapidly.  In a nutshell, it can infect Windows systems through
-a security hole. Then it will encrypt various types of files on those
-systems and wants you to pay ~300$ in Bitcoins for the decryption key.
+can spread rapidly.
+
+In a nutshell, it can infect vulnerable Windows systems without any user
+interaction.  Once infected, it will encrypt various types of files on
+those systems, then prompt the user to pay ~300$ in Bitcoins for the
+decryption key.
 
 It does so by exploiting a critical Windows security hole using code
 derived from the recently leaked trove of NSA hacking tools (`EternalBlue
 <https://en.wikipedia.org/wiki/EternalBlue>`_).  From what I've read it's
-not entirely clear how it's spreading.  But the bad news is that the
-security hole it exploits at least inside a local network doesn't require
-any user interaction.  The good news is that Microsoft has patched that
-hole in a recent security update.  So if your machines are up-to-date,
-they're probably not vulnerable.
+not entirely clear how it's spreading (i.e. if exploiting that security
+hole is the only means of propagation).
+
+The bad news is that the security hole it exploits at least inside a
+local network doesn't require any user interaction.  The good news is
+that Microsoft has patched that hole in a recent security update (already
+back in March).  So if your machines are up-to-date, they're probably not
+vulnerable.
 
 For further information read the following articles:
 
@@ -77,17 +83,17 @@ __ https://www.reddit.com/r/pcmasterrace/comments/6atu62/
 About this script
 -----------------
 
-It's actually nothing special, just runs a bunch of commands which I
-gathered from the previously mentioned links. Then I put them into a
-command line script written in Python [1]_.  All credit goes to the
-respective parties.
+The script is actually nothing special, just runs a bunch of commands
+which I gathered from the previously mentioned links (all credit goes to
+the respective parties).  It's written in Python [1]_, which has to be
+installed on your computer (see `Python`_ below).
 
-The script has the following parameters:
+The script accepts the following parameters:
 
   * ``-c`` or ``--check``: Check if the system is vulnerable.
     
-  * ``-m`` or ``--mitigate``: Disable the SMB v1 protocol if no fix is already
-    installed.
+  * ``-m`` or ``--mitigate``: Disable the SMB v1 protocol if no fix is
+    already installed.
 
   * Soon to come, not yet done: ``-f`` or ``--fix``: ...
 
@@ -95,17 +101,18 @@ The script has the following parameters:
 Usage
 -----
 
-Download the file ``nwnc.py`` from the ``src`` folder, open a command prompt
-and then...
+Download the file *nwnc.py* from the *src* folder and open a command
+prompt (e.g. press Windows key + R, then type: ``cmd``)::
 
+    \> cd path\to\directory\containing\the\script
+  
 If you only want to see if your system is vulnerable::
 
-    \> cd path\to\directory\containing\the\script
     \> python nwnc.py -c
 
-If you want to disable the SMB v1 protocol [2]_ if your system is vulnerable::
+If you want to disable the SMB v1 protocol [2]_ in case your system is
+vulnerable (``-m`` implies ``-c``)::
 
-    \> cd path\to\directory\containing\the\script
     \> python nwnc.py -m
 
 
@@ -116,8 +123,8 @@ Python
 all major platforms and needs to be installed on your system to run this
 script.
 
-If you don't want to do that, I recommend to instead having a look at the
-reddit thread to which I linked in `About WCry`_.
+If you don't want to do that, I recommend you have a look at the reddit
+thread to which I linked in `About WCry`_ for manual instructions.
 
 
 Additional Links
@@ -127,7 +134,7 @@ Additional Links
 
   * Even more information: `<https://github.com/Hackstar7/WanaCry>`__
 
-  * Microsoft issues patches for unsupported Windows versions:
+  * Fixes for older, unsupported Windows versions:
     `<https://arstechnica.com/security/2017/05/wcry-is-so-mean-microsoft
     -issues-patch-for-3-unsupported-windows-versions/>`__
 
@@ -136,9 +143,9 @@ Additional Links
    https://technet.microsoft.com/en-us/library/security/ms17-010.aspx
 
 
-.. [1] In Python because I've yet to take the time to properly learn
+.. [1] In Python because I've yet to spend some time to properly learn
        PowerShell myself.  If someone wants to provide a script entirely
-       written in PowerShell, feel free to send me a pull request or
+       written in PowerShell, feel free to send me a pull request or a
        link to your project/site.
 
 .. [2] If you're curious as to why disabling the SMB v1 protocol
