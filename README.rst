@@ -28,10 +28,6 @@ guarantee/warranty of any kind, as pointed out in the LICENSE.**
 Known Issues
 ~~~~~~~~~~~~
 
-  * Doesn't properly request admin privileges when run under Python 2.
-    I.e. you need to open an admin console beforehand, then run the 
-    script from there.
-
   * The ``fix`` command hasn't been implemented yet.
 
   * Has not been tested on many different systems yet, so it may not be
