@@ -265,10 +265,14 @@ def check_smb_v1_registry():
     
     proc_info = run(cmd)
     # third line contains the value, which should be '0' or '1', or ''
-    # if the key doesn't exist.  In that case it's assumed that SMBv1
-    # is active by default
-    value = proc_info.stdout.split()[2].strip()  
-    return False if value == '' else not bool(int(value))
+    # if the key doesn't exist.  If the key is missing SMBv1 is active
+    # by default.
+    result = proc_info.stdout.split()
+    if len(result) >= 3:
+        enabled = bool(int(result[2].strip()))
+    else:
+        enabled = True  # True by default
+    return not enabled
 
 
 def check_smb_v1():
