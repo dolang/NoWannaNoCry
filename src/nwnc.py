@@ -37,6 +37,7 @@ if sys.getwindowsversion().platform != 2:
 import argparse
 import ctypes
 from functools import partial
+import os
 import platform
 import re
 import subprocess
@@ -369,6 +370,14 @@ def set_smb_v1(enable):
               'This can make the system vulnerable, if the security hole is unpatched.')
 
 
+def _get_system_root():
+    """TODO:"""
+    if sys.version_info[0] == 2:
+        return _decode(os.environ.get('SystemRoot', b'C:\\Windows'))
+    # else:
+    return os.environ.get('SystemRoot', 'C:\\Windows')
+
+
 def am_admin():
     """Check if the logged-in user's account has admin privileges.
     
@@ -383,9 +392,8 @@ def am_admin():
         return ctypes.windll.shell32.IsUserAnAdmin()
     except:
         try:
-            import os
             # alternative approach: only admin users can read %SystemRoot%\temp
-            os.listdir(os.sep.join([os.environ.get('SystemRoot','C:\\windows'),'temp']))
+            os.listdir(os.path.join([_get_system_root(),'temp']))
             return True
         except PermissionError:
             return False
