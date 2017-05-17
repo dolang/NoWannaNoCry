@@ -358,7 +358,7 @@ def check_smb_v1_powershell():
         sys.stderr.write('Error:\r\n' + proc_info.stderr)
         sys.exit(1)
     # else:
-    print(proc_info.stdout)
+    # print(proc_info.stdout)
     return proc_info.stdout.split()[2].strip().lower() == 'false'
 
 
@@ -395,11 +395,13 @@ def check_smb_v1():
     :return: ``True`` if SMBv1 is disabled; otherwise, ``False``.
     :rtype: bool
     """
-    print('Checking if the SMB v1 protocol is disabled...')
+    print('Checking if the SMB v1 protocol is disabled...', end=' ')
     if can_check_smb_v1():
-        return check_smb_v1_powershell()
-    # else:
-    return check_smb_v1_registry()
+        smb_v1_disabled = check_smb_v1_powershell()
+    else:
+        smb_v1_disabled = check_smb_v1_registry()
+    print('yes' if smb_v1_disabled else 'no')
+    return smb_v1_disabled
 
 
 def can_set_smb_v1():
