@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals
 __author__ = 'Dominik Lang'
 __copyright___ = 'Copyright (c) 2017 Dominik Lang'
 __license___ = 'GPL v3'
-__version__ = '0.1.dev4'
+__version__ = '0.1.dev5'
 
 import sys
 from collections import namedtuple
@@ -42,14 +42,22 @@ import platform
 import re
 import subprocess
 import tempfile
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
+try:
+    from urllib.request import urlretrieve
+except ImportError:
+    from urllib import urlretrieve  # Python 2
 
 
 # Affected Windows versions.  Grouped by the KB updates to fix them.
 OsVersions = namedtuple('OsVersions',    
                         ['xp',             # Windows XP
-                         'xpe'             # Windows XP Embedded
-                         'xpwes09_pos09'   # Windows XP Embedded; WES09 & POSReady 2009
-                         's2003'           # Windows Server 2003 (& Windows XP x64)
+                         'xpe',            # Windows XP Embedded
+                         'xpwes09_pos09',  # Windows XP Embedded; WES09 & POSReady 2009
+                         's2003',          # Windows Server 2003 (& Windows XP x64)
                          'vista_s2008',    # Windows Vista & Windows Server 2008
                          'win7_2008r2',    # Windows 7 & Windows Server 2008 R2
                          'win8',           # Windows 8
@@ -469,12 +477,20 @@ def am_admin():
             return False  # safeguard, may want to expand on this later
 
 
-def run_as_admin():
-    """If required, rerun the script and request admin privileges."""
+def run_as_admin(extra_args=None):
+    """If required, rerun the script and request admin privileges.
+    
+    :params iterable extra_args:
+        Additional arguments to pass to the script in case it has to be
+        restarted.
+    """
     if not am_admin():
         try:
             print('Restarting and requesting admin privileges.')
-            exe, args = sys.executable, ' '.join(sys.argv)
+            args = sys.argv
+            if extra_args:
+                args = args + extra_args
+            exe, args = sys.executable, ' '.join(args)
             if sys.version_info[0] == 2:
                 exe = _decode(exe)
             ctypes.windll.shell32.ShellExecuteW(None, 'Runas', exe, args, None, 1)
@@ -528,25 +544,68 @@ def _get_os_arch():
     return 'x64' if platform.machine().endswith('64') else 'x86'
 
 
-def fix():
-    """TODO: doc
+def fix(download_directory=None):
+    """Fix the SMBv1 security hole by installing a Windows KB update.
+    
+    This tries to automatically find, download and install the right
+    update for your system.
     
     `fix()` implies running a `check()`.
+    
+    In case this doesn't work, try to run the mitigate command and
+    install the appropriate update youself. Have a look at the
+    `KB_DOWNLOAD` tuple at the top of the script to hopefully find
+    the right update.
+    
+    :param str download_directory:
+        Optionally specify a directory where the KB update is saved.
     """
-    raise NotImplementedError()  # TODO: download appropriate update & run setup
-
     if check():
         sys.exit()  # system isn't vulnerable
     # else:
-    # TODO: determine correct file
-    # TODO: download into temporary directory
-    
-    # install patch:
-    inst_exe = os.path.join(_get_system_root(), 'system32', 'wusa.exe')
-    if not os.path.exists(inst_exe):
-        pass # TODO: systems where wusa.exe isn't present?
+    if os_id_field_name() == 'win10_s2016':
+        # this script currently doesn't handle Windows 10 / Server 2016
+        sys.exit('Downloading and installing an update for Windows 10 or'
+                 ' Windows Server 2016 is currently not supported.'
+                 ' Please enable automatic updates instead.')
     # else:
-    # TODO: install patch
+    print('Trying to get an update for your system...')
+    kb_download_url = KB_DOWNLOAD[os_id_index()][_get_os_arch()]
+    # Use the same file name as on the Microsoft server, i.e. the last
+    # part of the URL path is the file name:
+    kb_file_name = urlparse(kb_download_url).path.split('/')[-1]
+    if not download_directory:
+        download_directory = tempfile.gettempdir()
+    kb_absolute_path = os.path.join(download_directory, kb_file_name)
+    
+    # Download the KB update only if it doesn't already exist in the
+    # download directory.  The script may have been restarted to get
+    # admin privileges, so the file could already be there.
+    if not os.path.exists(kb_absolute_path):
+        try:
+            urlretrieve(kb_download_url, kb_absolute_path)
+            print("The KB update has been downloaded to: " + kb_absolute_path)
+        except Exception as e:
+            sys.stderr.write('Error:' + e)
+            sys.exit('Unable to download the KB update for your system.')
+    
+    # install the update:
+    if kb_file_name.endswith('.exe'):
+        # if it's an .exe then run it directly:
+        proc_info = run([kb_absolute_path])
+    elif kb_file_name.endswith('.msu'):
+        run_as_admin(['--download-directory', download_directory])
+        inst_exe = os.path.join(_get_system_root(), 'system32', 'wusa.exe')
+        if not os.path.exists(inst_exe):
+            # TODO: are there systems where wusa.exe isn't present?
+            sys.exit("Windows Update Standalone Installer not found."
+                     " You will have to find a way to install the file"
+                     " '{}' manually".format(kb_absolute_path))
+        # else:
+        proc_info = run([inst_exe, kb_absolute_path])
+    if proc_info.stderr:
+        sys.stderr.write(proc_info)
+    print(proc_info.stdout)
 
 
 def cli_args():
@@ -561,7 +620,10 @@ def cli_args():
     parser.add_argument('-m', '--mitigate', action='store_true',
                         help="mitigate the system's vulnerability by disabling the"
                              " SMBv1 protocol, if necessary; implies --check")
-#     parser.add_argument('-f', '--fix', action='store_true')  # not yet implemented
+    parser.add_argument('-f', '--fix', action='store_true')
+    parser.add_argument('--download-directory',
+                        help="Optionally specify a directory where the Microsoft"
+                             " KB update is saved when using --fix")
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
@@ -574,11 +636,12 @@ def main():
     try:
         args = cli_args()
         
-        if args.check and not args.mitigate:
+        if args.check and not args.mitigate and not args.fix:
             check()
         elif args.mitigate:
             mitigate()
-        # TODO: implement & call fix()
+        elif args.fix:
+            fix(args.download_directory)
 
         input('\r\nDone. Press any key to exit.')
     except Exception as e:
