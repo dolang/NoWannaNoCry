@@ -128,32 +128,32 @@ a temporary directory is automatically created).  For example::
 Compatibility
 -------------
 
-The script is designed to run under Python 2 and 3, but hasn't been
-tested with both versions on every system.
+The script is designed to run with Python 2 and 3, but hasn't been tested
+with both versions on every system.
 
-So far, the following has been tested by me on real or virtual machines:
+So far, I've run the following tests on real or virtual machines:
 
-+-----------------+-----------+-----------+
-|                 |   check   |    fix    |
-| Windows Version +-----+-----+-----+-----+
-|                 | x86 | x64 | x86 | x64 |
-+=================+=====+=====+=====+=====+
-| Server 2003 R2  | |y| |     | |n| |     |
-+-----------------+-----+-----+-----+-----+
-| Windows 8       |     | |y| |     | |y| |
-+-----------------+-----+-----+-----+-----+
-| Windows 8.1     |     | |y| |     | |y| |
-+-----------------+-----+-----+-----+-----+
-| Windows 10      |     | |y| | N/A | N/A |
-+-----------------+-----+-----+-----+-----+
++-----------------+---------------+---------------+
+|                 |     check     |      fix      |
+| Windows Version +-------+-------+-------+-------+
+|                 |  x86  |  x64  |  x86  |  x64  |
++=================+=======+=======+=======+=======+
+| Server 2003 R2  |  |y|  |       |  |n|  |       |
++-----------------+-------+-------+-------+-------+
+| Windows 8       |       |  |y|  |       |  |y|  |
++-----------------+-------+-------+-------+-------+
+| Windows 8.1     |       |  |y|  |       |  |y|  |
++-----------------+-------+-------+-------+-------+
+| Windows 10      |       |  |y|  |  N/A  |  N/A  |
++-----------------+-------+-------+-------+-------+
 
-The command ``--fix`` does not yet work on the version of *Server 2003
-R2* I was testing because it doesn't have the English version installed
+The command ``--fix`` does not yet work on the version of **Server 2003
+R2** I was testing because it doesn't have the English version installed
 (see `Known Issues`_).
 
-.. |y| unicode:: U+2713
+.. |y| unicode:: U+2714
 
-.. |n| unicode:: U+2717
+.. |n| unicode:: U+2718
 
 
 Python
