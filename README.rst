@@ -110,12 +110,13 @@ vulnerable (``-m`` implies ``-c``)::
 
     \> python nwnc.py -m
     
-To download and install an appropriate KB update::
+To download and install an appropriate KB update in case your system is
+vulnerable (``-f`` also implies ``-c``)::
 
     \> python nwnc.py -f
     
-Optionally, you can specify a download directory manually (if you
-don't, a temporary directory is automatically created).  For example::
+Optionally, you can specify a download directory manually (if you don't,
+a temporary directory is automatically created).  For example::
 
     \> python nwnc.py -f --download-directory "C:\Users\MyName\Downloads"
 
@@ -129,6 +130,20 @@ script.
 
 If you don't want to do that, I recommend you have a look at the reddit
 thread to which I linked in `About WCry`_ for manual instructions.
+
+
+Manual Approaches
+-----------------
+
+  - The simplest way to fix the security hole is to enable automatic
+    Windows Updates and let it install the latest patches.
+
+  - Microsoft has released KB updates even for systems that are no longer
+    supported, i.e. Windows XP, Windows Server 2003 and Windows 8 (see
+    the Ars Technica article in `Additional Links`_).  Links to these
+    updates are included in *nwnc.py*, therefore you could just open the
+    script with a text editor, search for ``KB_DOWNLOAD`` and copy the
+    correct download URL for your own system.
 
 
 Additional Links
