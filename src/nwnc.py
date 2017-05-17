@@ -109,7 +109,7 @@ KB_DOWNLOAD = OsVersions(
     {  # xpe:
         'x86': 'http://download.windowsupdate.com/c/csa/csa/secu/2017/02/windowsxp-kb4012598-x86-embedded-custom-enu_8f2c266f83a7e1b100ddb9acd4a6a3ab5ecd4059.exe',
     },
-    {
+    {  # xpwes09_pos09:
         'x86': 'http://download.windowsupdate.com/d/msdownload/update/software/secu/2017/02/windowsxp-kb4012598-x86-embedded-enu_9515c11bc77e39695b83cb6f0e41119387580e30.exe',
     },
     {  # s2003
@@ -159,6 +159,9 @@ def os_id_index():
     affected Windows versions.  These are matched against
     the major and minor version of `sys.getwindowsversion()`.
     
+    For Windows 8.1 and above `sys.getwindowsversion()` doesn't
+    report the correct value, these systems are handled specially. 
+    
     Windows 8 and Server 2012 are special cased because the have the
     same version numbers but require different KBs.
     
@@ -166,8 +169,21 @@ def os_id_index():
     :rtype: int
     """
     winver = sys.getwindowsversion()
+    # sys.getwindowsversion is not enough by itself as the underlying
+    # API has been deprecated.  Only applications which have been
+    # developed specifically for Windows 8.1 and above, and write that
+    # into their manifest file get the correct Windows version on those
+    # systems.  Other applications (Python doesn't have the manifest)
+    # get a version that pretends to be Windows 8 (major=6, minor=2).
+    # See:
+    # https://msdn.microsoft.com/en-us/library/windows/desktop/ms724834.aspx
+    major, minor = winver.major, winver.minor
+    if (major, minor) == (6, 2):
+        # Determine if this system is a newer version than Windows 8 by
+        # parsing the version string in `platform.win32_ver()[1]`:
+        major, minor = tuple(map(int, platform.win32_ver()[1].split('.')[:2]))
     for i, os_id in enumerate(OS_ID):
-        if os_id[:2] == (winver.major, winver.minor):
+        if os_id[:2] == (major, minor):
             if len(os_id) == 2:
                 return i
             # else evaluate the third item if present which is a lambda:
