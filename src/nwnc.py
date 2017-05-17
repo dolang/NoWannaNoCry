@@ -21,7 +21,7 @@ from __future__ import print_function, unicode_literals
 __author__ = 'Dominik Lang'
 __copyright___ = 'Copyright (c) 2017 Dominik Lang'
 __license___ = 'GPL v3'
-__version__ = '0.1.dev5'
+__version__ = '0.1'
 
 import sys
 from collections import namedtuple
@@ -276,11 +276,9 @@ def list_kbs():
     
     KB stands for "Knowledge Base".  The Windows Update identifier
     strings are called that because the updates are associated with
-    Knowledge Base articles and the strings themselves start with
-    the prefix "KB".
-    
-    The first line of the executed command is the header "HotFixID" and
-    is stripped from the result (through slicing ``...[1:]``).
+    Knowledge Base articles and the strings themselves usually start
+    with the prefix "KB".  Other strings are discarded when using
+    `list_kb()`.
     
     :return: A list of KB strings.
     :rtype: list(str)
@@ -632,6 +630,10 @@ def fix(download_directory=None):
         except Exception as e:
             sys.stderr.write('Error:' + e)
             sys.exit('Unable to download the KB update for your system.')
+    else:
+        msg = "Using KB update '{}' in directory '{}'.".format(
+            kb_file_name, os.path.abspath(download_directory))
+        print(msg)
     
     # install the update:
     if kb_file_name.endswith('.exe'):

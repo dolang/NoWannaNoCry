@@ -32,6 +32,10 @@ Known Issues
   * Has not been tested on many different systems yet, so it may not be
     robust enough to run on yours.
 
+  * When using the ``--fix`` command, updates for older Windows versions
+    can be language specific.  Only English versions are supported at the
+    moment.
+
 
 About WCry
 ----------
@@ -121,6 +125,37 @@ a temporary directory is automatically created).  For example::
     \> python nwnc.py -f --download-directory "C:\Users\MyName\Downloads"
 
 
+Compatibility
+-------------
+
+The script is designed to run under Python 2 and 3, but hasn't been
+tested with both versions on every system.
+
+So far, the following has been tested by me on real or virtual machines:
+
++-----------------+-----------+-----------+
+|                 |   check   |    fix    |
+| Windows Version +-----+-----+-----+-----+
+|                 | x86 | x64 | x86 | x64 |
++=================+=====+=====+=====+=====+
+| Server 2003 R2  | |y| |     | |n| |     |
++-----------------+-----+-----+-----+-----+
+| Windows 8       |     | |y| |     | |y| |
++-----------------+-----+-----+-----+-----+
+| Windows 8.1     |     | |y| |     | |y| |
++-----------------+-----+-----+-----+-----+
+| Windows 10      |     | |y| | N/A | N/A |
++-----------------+-----+-----+-----+-----+
+
+The command ``--fix`` does not yet work on the version of *Server 2003
+R2* I was testing because it doesn't have the English version installed
+(see `Known Issues`_).
+
+.. |y| unicode:: U+2713
+
+.. |n| unicode:: U+2717
+
+
 Python
 ------
 
@@ -140,10 +175,17 @@ Manual Approaches
 
   - Microsoft has released KB updates even for systems that are no longer
     supported, i.e. Windows XP, Windows Server 2003 and Windows 8 (see
-    the Ars Technica article in `Additional Links`_).  Links to these
-    updates are included in *nwnc.py*, therefore you could just open the
-    script with a text editor, search for ``KB_DOWNLOAD`` and copy the
-    correct download URL for your own system.
+    the Ars Technica article in `Additional Links`_).
+
+    - Links to these updates are included in *nwnc.py*, therefore you
+      could just open the script with a text editor, search for
+      ``KB_DOWNLOAD`` and select the correct download URL for your own
+      system.
+
+    - Alternatively, if you know the KB number of your update, you can
+      visit http://www.catalog.update.microsoft.com and search for the
+      update yourself.  The site will show a list of files with all
+      supported operating systems of a given KB update.
 
 
 Additional Links
