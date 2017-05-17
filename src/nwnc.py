@@ -102,6 +102,12 @@ REQUIRED_KB = OsVersions(
 )
 
 
+# Download URLs for the KB updates.  Note that 32-bit and 64-bit systems
+# need specific updates.  'x86' means 32-bit, 'x64' an 'ia64'
+# are 64-bit.  'x64' is also known as "x86-64" and "AMD64".  When in
+# doubt, this is probably what you want if you have a 64-bit system.
+# 'ia64' is also known as Itanium.  Processors with this architecture
+# are generally only used on servers.
 KB_DOWNLOAD = OsVersions(
     {  # xp:
         'x86': 'http://download.windowsupdate.com/d/csa/csa/secu/2017/02/windowsxp-kb4012598-x86-custom-enu_eceb7d5023bbb23c0dc633e46b9c2f14fa6ee9dd.exe',
@@ -239,11 +245,30 @@ def _strip_to_kb(kb_string):
     'KB2712101_Microsoft-Windows-CameraCodec-Package'.
     Strip that down to 'KB2712101'.
     
+    Some strings don't follow this pattern. In that case, return
+    ``None``.
+    
     :param str kb_string: An unprocessed KB string.
-    :return: The cleaned up KB string.
+    :return:
+        The cleaned up KB string or ``None``, if the string contains
+        something else.
     :rtype: str
     """
-    return re.match('KB\d+', kb_string).group()    
+    match = re.match('KB\d+', kb_string)
+    return match.group() if match else None
+
+
+def _only_kbs(hotfixids):
+    """Filter out all values which aren't "KB" and an associated number.
+    
+    :param list(str) hotfixids:
+        A list of identifiers returned by the command ``wmic qfe get
+        hotfixid`` is expected.
+    """
+    for id_ in hotfixids:
+        kb = _strip_to_kb(id_)
+        if kb:
+            yield kb
 
 
 def list_kbs():
@@ -263,7 +288,8 @@ def list_kbs():
     cmd = ['wmic', 'qfe', 'get', 'hotfixid']
     
     proc_info = run(cmd)
-    return [_strip_to_kb(s) for s in proc_info.stdout.split()[1:]]
+    hotfixids = proc_info.stdout.split()
+    return list(_only_kbs(hotfixids))
 
 
 def check_installed_kbs():
