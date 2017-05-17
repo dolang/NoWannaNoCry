@@ -28,8 +28,6 @@ guarantee/warranty of any kind, as pointed out in the LICENSE.**
 Known Issues
 ~~~~~~~~~~~~
 
-  * The ``fix`` command hasn't been implemented yet.
-
   * Has not been tested on many different systems yet, so it may not be
     robust enough to run on yours.
 
