@@ -2,16 +2,17 @@
 NoWannaNoCry - nwnc.py
 ======================
 
-A script to help mitigate against the WCry malware which was infecting
-machines over the internet.  Note: The spreading of the initial version
-of this malware seems to have been stopped by a built-in kill switch.
+A script to help mitigate against the *WCry* malware which can infect
+vulnerable and exposed Windows machines over the internet.  Note: The
+spreading of the initial version of this malware has been stopped by a
+built-in kill switch, but new variants have appeared in the meantime.
 
 Some script operations need elevated permissions, so don't just trust me
 on this, but read this document carefully and have a look at the code
 itself before running it.
 
 **Important:** The script can only diagnose and close the security hole
-which is being exploited by WCry to infect new machines.  To my
+which is being exploited by *WCry* to infect new machines.  To my
 knowledge, so far it's not possible to recover already encrypted files
 without the encryption key (which of course I don't have).  Therefore,
 this script won't help you if your machine is already infected.
@@ -50,13 +51,12 @@ derived from the recently leaked trove of NSA hacking tools (`EternalBlue
 not entirely clear how it's spreading (i.e. if exploiting that security
 hole is the only means of propagation).
 
-The bad news is that the security hole it exploits at least inside a
-local network doesn't require any user interaction.  The good news is
-that Microsoft has patched that hole in a recent security update (already
-back in March).  So if your machines are up-to-date, they're probably not
-vulnerable.
+The bad news is that the security hole it exploits doesn't require any
+user interaction.  The good news is that Microsoft has patched that hole
+in a recent security update (already back in March).  So if your
+machines are up-to-date, they're probably not vulnerable.
 
-For further information read the following articles:
+For more information, have a look at the following articles:
 
   * `An NSA-derived ransomware worm is shutting down computers
     worldwide - Ars Technica`__
@@ -114,8 +114,8 @@ To download and install an appropriate KB update::
 
     \> python nwnc.py -f
     
-Optionally, you can specify a download directory manually.  If you
-don't, a temporary directory is automatically created.  For example::
+Optionally, you can specify a download directory manually (if you
+don't, a temporary directory is automatically created).  For example::
 
     \> python nwnc.py -f --download-directory "C:\Users\MyName\Downloads"
 
