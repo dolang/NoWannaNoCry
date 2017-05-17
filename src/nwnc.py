@@ -41,35 +41,49 @@ import os
 import platform
 import re
 import subprocess
+import tempfile
 
 
 # Affected Windows versions.  Grouped by the KB updates to fix them.
 OsVersions = namedtuple('OsVersions',    
                         ['xp',             # Windows XP
+                         'xpe'             # Windows XP Embedded
+                         'xpwes09_pos09'   # Windows XP Embedded; WES09 & POSReady 2009
+                         's2003'           # Windows Server 2003 (& Windows XP x64)
                          'vista_s2008',    # Windows Vista & Windows Server 2008
                          'win7_2008r2',    # Windows 7 & Windows Server 2008 R2
                          'win8',           # Windows 8
-                         's2012',          # Windows Server 2012
+                         'wine8s_s2012',   # Windows Embedded 8 Standard & Windows Server 2012
                          'win81_s2012r2',  # Windows 8.1 & Windows Server 2012 R2
                          'win10_s2016'])   # Windows 10 & Windows Server 2016
 
 
 # (Major, Minor, predicate) version numbers of Windows systems and a
 # check to distinguish between Windows 8 and Server 2012
+#
+# Note: Windows XP x64 has version 5.2 like Windows Server 2003 (s2003)
+#       and also uses the same patch. 
 OS_ID = OsVersions(
-    (5, 1),  # xp
+    (5, 1, lambda: True),  # xp
+    (5, 1, lambda: False),  # xpe; TODO: not yet supported
+    (5, 1, lambda: False),  # xpwes09_pos09; TODO: not yet supported
+    (5, 2),  # s2003
     (6, 0),  # vista_s2008
     (6, 1),  # win7_2008r2
-    (6, 2, lambda: platform.uname()[2] == '8'),  # win8
-    (6, 2, lambda: platform.uname()[2] != '8'),  # s2012
+    (6, 2, lambda: platform.uname()[2] == '8'),  # win8  TODO: win8 vs. wine8s
+    (6, 2, lambda: platform.uname()[2] != '8'),  # s2012  TODO: win8 vs. wine8s
     (6, 3),  # win81_s2012r2
     (10, 0)  # win10_s2016 
 )
+
 
 # Systems with multiple applicable KBs only need one of them to not be
 # vulnerable.
 REQUIRED_KB = OsVersions(
     ['KB4012598'],  # xp
+    ['KB4012598'],  # xpe
+    ['KB4012598'],  # xpwes09_pos09
+    ['KB4012598'],  # s2003    
     ['KB4012598'],  # vista_s2008
     ['KB4012212', 'KB4012215'],  # win7_2008r2
     ['KB4012598'],  # win8
@@ -77,6 +91,51 @@ REQUIRED_KB = OsVersions(
     ['KB4012213', 'KB4012216'],  # win81_s2012r2
     ['KB4012606', 'KB4013198', 'KB4013429', 'KB4015438',  # win10_s2016
      'KB4016635', 'KB4015217', 'KB4019472']
+)
+
+
+KB_DOWNLOAD = OsVersions(
+    {  # xp:
+        'x86': 'http://download.windowsupdate.com/d/csa/csa/secu/2017/02/windowsxp-kb4012598-x86-custom-enu_eceb7d5023bbb23c0dc633e46b9c2f14fa6ee9dd.exe',
+    },
+    {  # xpe:
+        'x86': 'http://download.windowsupdate.com/c/csa/csa/secu/2017/02/windowsxp-kb4012598-x86-embedded-custom-enu_8f2c266f83a7e1b100ddb9acd4a6a3ab5ecd4059.exe',
+    },
+    {
+        'x86': 'http://download.windowsupdate.com/d/msdownload/update/software/secu/2017/02/windowsxp-kb4012598-x86-embedded-enu_9515c11bc77e39695b83cb6f0e41119387580e30.exe',
+    },
+    {  # s2003
+        'x86': 'http://download.windowsupdate.com/c/csa/csa/secu/2017/02/windowsserver2003-kb4012598-x86-custom-enu_f617caf6e7ee6f43abe4b386cb1d26b3318693cf.exe',
+        'x64': 'http://download.windowsupdate.com/d/csa/csa/secu/2017/02/windowsserver2003-kb4012598-x64-custom-enu_f24d8723f246145524b9030e4752c96430981211.exe',
+    },
+    {  # vista_s2008:
+        'x86': 'http://download.windowsupdate.com/d/msdownload/update/software/secu/2017/02/windows6.0-kb4012598-x86_13e9b3d77ba5599764c296075a796c16a85c745c.msu',
+        'x64': 'http://download.windowsupdate.com/d/msdownload/update/software/secu/2017/02/windows6.0-kb4012598-x64_6a186ba2b2b98b2144b50f88baf33a5fa53b5d76.msu',
+        'ia64': 'http://download.windowsupdate.com/d/msdownload/update/software/secu/2017/02/windows6.0-kb4012598-ia64_83a6f5a70588b27623b11c42f1c8124a25d489de.msu',
+    },
+    {  # win7_2008r2
+        'x86': 'http://download.windowsupdate.com/d/msdownload/update/software/secu/2017/02/windows6.1-kb4012212-x86_6bb04d3971bb58ae4bac44219e7169812914df3f.msu',
+        'x64': 'http://download.windowsupdate.com/d/msdownload/update/software/secu/2017/02/windows6.1-kb4012212-x64_2decefaa02e2058dcd965702509a992d8c4e92b3.msu',
+        'ia64': 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/02/windows6.1-kb4012212-ia64_93a42b16dbea87fa04e2b527676a499f9fbba554.msu',
+    },
+    {  # win8
+        'x86': 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/05/windows8-rt-kb4012598-x86_a0f1c953a24dd042acc540c59b339f55fb18f594.msu',
+        'x64': 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/05/windows8-rt-kb4012598-x64_f05841d2e94197c2dca4457f1b895e8f632b7f8e.msu',
+    },
+    {  # s2012
+        'x86': 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/02/windows8-rt-kb4012214-x86_5e7e78f67d65838d198aa881a87a31345952d78e.msu',
+        'x64': 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/02/windows8-rt-kb4012214-x64_b14951d29cb4fd880948f5204d54721e64c9942b.msu',
+    },
+    {  # win81_s2012r2
+        'x86': 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/02/windows8.1-kb4012213-x86_e118939b397bc983971c88d9c9ecc8cbec471b05.msu',
+        'x64': 'http://download.windowsupdate.com/c/msdownload/update/software/secu/2017/02/windows8.1-kb4012213-x64_5b24b9ca5a123a844ed793e0f2be974148520349.msu',
+    },
+    {  # win10_s2016
+        # TODO: KBs of Windows 10 / Windows Server 2016 are cumulative,
+        #       not yet clear if this particular fix can even be
+        #        installed indiviudally, or if the only solution is:
+        #       "be up-to-date"
+    },
 )
 
 
@@ -371,7 +430,16 @@ def set_smb_v1(enable):
 
 
 def _get_system_root():
-    """TODO:"""
+    """Try to get the %SystemRoot% path from the environment.
+    
+    The %SystemRoot% should be an environment variable holding the path
+    to the Windows installation directory.
+    
+    Default to 'C:\\Windows'.
+    
+    :return: The %SystemRoot% path string.
+    :rtype: str
+    """
     if sys.version_info[0] == 2:
         return _decode(os.environ.get('SystemRoot', b'C:\\Windows'))
     # else:
@@ -455,12 +523,30 @@ def mitigate():
     set_smb_v1(False)
 
 
+def _get_os_arch():
+    """TODO: doc; find out what to do on an ia64 system; test it"""
+    return 'x64' if platform.machine().endswith('64') else 'x86'
+
+
 def fix():
     """TODO: doc
     
     `fix()` implies running a `check()`.
     """
     raise NotImplementedError()  # TODO: download appropriate update & run setup
+
+    if check():
+        sys.exit()  # system isn't vulnerable
+    # else:
+    # TODO: determine correct file
+    # TODO: download into temporary directory
+    
+    # install patch:
+    inst_exe = os.path.join(_get_system_root(), 'system32', 'wusa.exe')
+    if not os.path.exists(inst_exe):
+        pass # TODO: systems where wusa.exe isn't present?
+    # else:
+    # TODO: install patch
 
 
 def cli_args():
