@@ -89,7 +89,8 @@ The script accepts the following parameters:
   * ``-m`` or ``--mitigate``: Disable the SMB v1 protocol if no fix is
     already installed.
 
-  * Soon to come, not yet done: ``-f`` or ``--fix``: ...
+  * ``-f`` or ``--fix``: Tries to automatically determine, download and
+    install a Microsoft KB update for your version of Windows.
 
 
 Usage
@@ -108,6 +109,15 @@ If you want to disable the SMB v1 protocol [2]_ in case your system is
 vulnerable (``-m`` implies ``-c``)::
 
     \> python nwnc.py -m
+    
+To download and install an appropriate KB update::
+
+    \> python nwnc.py -f
+    
+Optionally, you can specify a download directory manually.  If you
+don't, a temporary directory is automatically created.  For example::
+
+    \> python nwnc.py -f --download-directory "C:\Users\MyName\Downloads"
 
 
 Python
